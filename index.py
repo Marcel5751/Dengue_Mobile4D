@@ -1,4 +1,4 @@
-'''
+/'''
 Dengue Mobuile4D Missing Streets API
 
 How to run
@@ -50,11 +50,11 @@ with open(
         'Nakhon-Si-Thammarat-missing-streets.geojson')
     ) as data_file:
     missing_streets = json.load(data_file)
-    
+
 #import csv dengue-case
 denguecase = pd.read_csv(os.path.join('static','dengue-cases','dengue-cases.csv'))
 denguecase['addrcode'] = denguecase['addrcode'].astype(str)
-    
+
 #import Nakhon in subdistrict Shapefile
 with open(
     os.path.join(
@@ -72,8 +72,8 @@ with open(
         'Nakhon-Si-Thammarat-missing-boxes.geojson')
     ) as missingboxes_file:
     Nakhonmissingboxes = json.load(missingboxes_file)
-    
-    
+
+
 '''
 1. Request missing streets =========================================
 '''
@@ -148,6 +148,22 @@ def get_image_urls():
             print(json_respond)
             return jsonify(json_respond)
 
+
+    for breeding_site in data['properties']['breeding_sites']:
+        try:
+            # save csv of picture filename and breeding site
+            print(breeding_site)
+            json_respond['status'] = 'ok'
+            json_respond['message'] = 'breeding site received'
+            print(json_respond)
+            return jsonify(json_respond)
+        except:
+            json_respond['status'] = 'error'
+            json_respond['message'] = 'No bereeding site give-n'
+            print(json_respond)
+            return jsonify(json_respond)
+
+
         for ind, image_url in enumerate(data['properties']['image_urls']):
             try:
                 resource = urllib.request.urlopen(image_url)
@@ -160,6 +176,7 @@ def get_image_urls():
                 json_respond['message'] = 'Couldn\'t create upload directory: {}'.format(target)
                 print(json_respond)
                 return jsonify(json_respond)
+
 
         json_respond['status'] = 'success'
         json_respond['message'] = 'The images have been uploaded.'
@@ -284,22 +301,22 @@ def upload_file():
       json_respond['message'] = 'Request method != POST'
       return jsonify(json_respond)
 
-    
+
 
 @app.route('/dengue/get/cases/', methods=['GET','POST'])
 def dengue_cases():
     json_respond = {}
-    
+
     data = request.json
-    
+
     lng, lat = data['geometry']['coordinates']
     level = data['properties']['level']
-    
+
     point = Point(lng,lat)
     TB_ID = 0
     AP_ID = 0
     totalPolygon = len(NakhonSubdistrict['features'])
-    
+
     for i, feature in enumerate(NakhonSubdistrict['features']):
         poly = Polygon(NakhonSubdistrict['features'][i]['geometry']['coordinates'][0])
         if(poly.contains(point)):
@@ -323,23 +340,23 @@ def dengue_cases():
         json_respond['message'] = 'totalcases = '+str(district_count)
         json_respond['level'] = level
         return jsonify(json_respond)
-    
-    
+
+
 @app.route('/dengue/get/missing-boxes/', methods=['GET','POST'])
 def dengue_get_missingboxes():
     json_respond = {}
-    
+
     data = request.json
-    
+
     lng, lat = data['geometry']['coordinates']
-    
+
     target_streets = missingboxradar.by_radius(
     target_streets=deepcopy(Nakhonmissingboxes),
     lat=lat,
     lng=lng,
     radius=data['properties']['radius'],
     )
-    
+
     if len(target_streets['features']) == 0:
         json_respond['status'] = 'error'
         json_respond['message'] = 'No missing-points found in the radius'
