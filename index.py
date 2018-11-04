@@ -1,4 +1,4 @@
-/'''
+'''
 Dengue Mobuile4D Missing Streets API
 
 How to run
@@ -12,6 +12,8 @@ import base64
 import csv
 import re
 import pandas as pd
+import csv
+import googlemaps
 
 from flask import Flask, jsonify, request, abort
 from flask import redirect, url_for, send_from_directory
@@ -31,6 +33,7 @@ from modules import missingboxradar
 '''
 0. Initialization =================================================
 '''
+gmaps = googlemaps.Client(key='AIzaSyC_Q0BJiwIAdd-xOPVKHkdCcPMeioK3-NI')
 
 UPLOAD_FOLDER = os.path.join('static','uploads')
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
@@ -149,19 +152,16 @@ def get_image_urls():
             return jsonify(json_respond)
 
 
-    for breeding_site in data['properties']['breeding_sites']:
-        try:
-            # save csv of picture filename and breeding site
-            print(breeding_site)
-            json_respond['status'] = 'ok'
-            json_respond['message'] = 'breeding site received'
-            print(json_respond)
-            return jsonify(json_respond)
-        except:
-            json_respond['status'] = 'error'
-            json_respond['message'] = 'No bereeding site give-n'
-            print(json_respond)
-            return jsonify(json_respond)
+        for breeding_site in data['geometry']['breeding_sites']:
+            try:
+                # print(str(data))
+                # print(breeding_site)
+                write_breeding_site_to_csv(target, breeding_site)
+            except:
+                json_respond['status'] = 'error'
+                json_respond['message'] = 'No bereeding site give-n'
+                print(json_respond)
+                return jsonify(json_respond)
 
 
         for ind, image_url in enumerate(data['properties']['image_urls']):
@@ -177,11 +177,25 @@ def get_image_urls():
                 print(json_respond)
                 return jsonify(json_respond)
 
-
         json_respond['status'] = 'success'
         json_respond['message'] = 'The images have been uploaded.'
         print(json_respond)
         return jsonify(json_respond)
+
+
+def write_breeding_sites_to_csv(image_folder, list_of_bs):
+    with open("./breeding_sites.csv", 'w', newline='') as myfile:
+        wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+        print(str(wr))
+        write_breeding_sites_to_csv
+        wr.writerows([image_folder, breeding_site])
+
+
+def write_breeding_site_to_csv(image_folder, breeding_site):
+    with open("./breeding_sites.csv", 'a') as myfile:
+        wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+        print(str(wr))
+        wr.writerow([image_folder, breeding_site])
 
 
 '''
@@ -308,19 +322,35 @@ def dengue_cases():
     json_respond = {}
 
     data = request.json
-
-    lng, lat = data['geometry']['coordinates']
     level = data['properties']['level']
+    data_type = data['geometry']['type']
 
-    point = Point(lng,lat)
-    TB_ID = 0
-    AP_ID = 0
+    if data_type != 'Point' and data_type != 'Name':
+        json_respond['status'] = 'error'
+        json_respond['message'] = 'Not a point geometry'
+        return jsonify(json_respond)
+
+    if data['geometry']['type'] == 'Name':
+        # PV_EN == province name
+        # TB_EN == subdistrict
+        # AP == disctict
+        district_name = data['geometry']['name_string']
+        point = Point(get_coords_for_district(district_name))
+        TB_ID = 0
+        AP_ID = 0
+
+    elif data['geometry']['type'] == 'Point':
+        lng, lat = data['geometry']['coordinates']
+        point = Point(lng,lat)
+
     totalPolygon = len(NakhonSubdistrict['features'])
 
     for i, feature in enumerate(NakhonSubdistrict['features']):
         poly = Polygon(NakhonSubdistrict['features'][i]['geometry']['coordinates'][0])
         if(poly.contains(point)):
             TB_ID = feature['properties']['TB_IDN']
+            print("feature: " + str(feature))
+            print(str(TB_ID))
             AP_ID = feature['properties']['AP_IDN']
             break
         elif i == totalPolygon - 1 :
@@ -340,6 +370,14 @@ def dengue_cases():
         json_respond['message'] = 'totalcases = '+str(district_count)
         json_respond['level'] = level
         return jsonify(json_respond)
+
+
+def get_coords_for_district(district_name):
+    geocode_result = gmaps.geocode(district_name)
+    district_coords = geocode_result[0]['geometry']['location']
+    lat = district_coords['lat']
+    lng = district_coords['lng']
+    return lng, lat
 
 
 @app.route('/dengue/get/missing-boxes/', methods=['GET','POST'])
