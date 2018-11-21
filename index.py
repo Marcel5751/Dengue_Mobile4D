@@ -395,31 +395,49 @@ def dengue_get_missingboxes():
     data = request.json
 
     lng, lat = data['geometry']['coordinates']
+    radius = data['properties']['radius']
+    target_streets_mahidol = get_target_streets_for_mahidol_campus(lng, lat, radius)
 
-    # target_streets = missingboxradar.by_radius(
-    # target_streets=deepcopy(Nakhonmissingboxes),
-    # lat=lat,
-    # lng=lng,
-    # radius=data['properties']['radius'],
-    # )
-
-    target_streets = missingboxradar.by_radius(
-    target_streets=deepcopy(Mahidolmissingboxes),
-    lat=lat,
-    lng=lng,
-    radius=data['properties']['radius'],
-    )
-
-    if len(target_streets['features']) == 0:
+    if len(target_streets_mahidol['features']) == 0:
         json_respond['status'] = 'error'
         json_respond['message'] = 'No missing-points found in the radius'
-        return jsonify(json_respond)
+        # if no missing points found on campus, check in nakhon file
+        target_streets_nakhon = get_target_streets_for_nakhon(lng, lat, radius)
+        if len(target_streets_nakhon['features']) == 0:
+            return jsonify(json_respond)
+        else:
+            json_respond['status'] = 'success'
+            json_respond['message'] = 'Missing-points found'
+            print(json_respond)
+            json_respond['data'] = target_streets_nakhon
+            return jsonify(json_respond)
     else:
         json_respond['status'] = 'success'
         json_respond['message'] = 'Missing-points found'
         print(json_respond)
-        json_respond['data'] = target_streets
+        json_respond['data'] = target_streets_mahidol
         return jsonify(json_respond)
+
+
+def get_target_streets_for_mahidol_campus(lng, lat, radius):
+    target_streets = missingboxradar.by_radius(
+    target_streets=deepcopy(Mahidolmissingboxes),
+    lat=lat,
+    lng=lng,
+    radius=radius,
+    )
+    return target_streets
+
+
+def get_target_streets_for_nakhon(lng, lat, radius):
+    target_streets = missingboxradar.by_radius(
+    target_streets=deepcopy(Nakhonmissingboxes),
+    lat=lat,
+    lng=lng,
+    radius=radius,
+    )
+    return target_streets
+
 
 '''
 ==================== Test API ===========================
