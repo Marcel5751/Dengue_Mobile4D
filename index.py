@@ -76,6 +76,14 @@ with open(
     ) as missingboxes_file:
     Nakhonmissingboxes = json.load(missingboxes_file)
 
+with open(
+    os.path.join(
+        'static',
+        'missing-boxes',
+        'Mahidol_missing.geojson')
+    ) as mahidol_missing_file:
+    Mahidolmissingboxes = json.load(mahidol_missing_file)
+
 
 '''
 1. Request missing streets =========================================
@@ -388,8 +396,15 @@ def dengue_get_missingboxes():
 
     lng, lat = data['geometry']['coordinates']
 
+    # target_streets = missingboxradar.by_radius(
+    # target_streets=deepcopy(Nakhonmissingboxes),
+    # lat=lat,
+    # lng=lng,
+    # radius=data['properties']['radius'],
+    # )
+
     target_streets = missingboxradar.by_radius(
-    target_streets=deepcopy(Nakhonmissingboxes),
+    target_streets=deepcopy(Mahidolmissingboxes),
     lat=lat,
     lng=lng,
     radius=data['properties']['radius'],
