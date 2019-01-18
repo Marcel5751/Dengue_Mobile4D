@@ -453,6 +453,13 @@ def foo():
     data['message'] = 'Hey'
     return json.dumps(data)
 
+
+@app.route('/dengue/test/', methods=['GET','POST'])
+def test():
+    json_respond = {}
+    json_respond['message'] = 'Hi'
+    return jsonify(json_respond)
+
 '''
 =========================================================
 '''
