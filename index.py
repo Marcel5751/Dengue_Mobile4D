@@ -160,16 +160,19 @@ def get_image_urls():
             return jsonify(json_respond)
 
 
-        for breeding_site in data['geometry']['breeding_sites']:
-            try:
-                # print(str(data))
-                # print(breeding_site)
-                write_breeding_site_to_csv(target, breeding_site)
-            except:
-                json_respond['status'] = 'error'
-                json_respond['message'] = 'No bereeding site give-n'
-                print(json_respond)
-                return jsonify(json_respond)
+        try:
+            for breeding_site in data['geometry']['breeding_sites']:
+                try:
+                    # print(str(data))
+                    # print(breeding_site)
+                    write_breeding_site_to_csv(target, breeding_site)
+                except:
+                    json_respond['status'] = 'error'
+                    json_respond['message'] = 'No bereeding site give-n'
+                    print(json_respond)
+                    return jsonify(json_respond)
+        except KeyError as e:
+            print(e)
 
 
         for ind, image_url in enumerate(data['properties']['image_urls']):
