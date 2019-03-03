@@ -404,21 +404,24 @@ def dengue_get_missingboxes():
     if len(target_streets_mahidol['features']) == 0:
         json_respond['status'] = 'error'
         json_respond['message'] = 'No missing-points found in the radius'
+        return jsonify(json_respond)
+
         # if no missing points found on campus, check in nakhon file
-        target_streets_nakhon = get_target_streets_for_nakhon(lng, lat, radius)
-        if len(target_streets_nakhon['features']) == 0:
-            return jsonify(json_respond)
-        else:
-            json_respond['status'] = 'success'
-            json_respond['message'] = 'Missing-points found'
-            print(json_respond)
-            json_respond['data'] = target_streets_nakhon
-            return jsonify(json_respond)
+
+        # target_streets_nakhon = get_target_streets_for_nakhon(lng, lat, radius)
+        # if len(target_streets_nakhon['features']) == 0:
+        #     return jsonify(json_respond)
+        # else:
+        #     json_respond['status'] = 'success'
+        #     json_respond['message'] = 'Missing-points found'
+        #     print(json_respond)
+        #     json_respond['data'] = target_streets_nakhon
+        #     return jsonify(json_respond)
     else:
         json_respond['status'] = 'success'
         json_respond['message'] = 'Missing-points found'
-        print(json_respond)
         json_respond['data'] = target_streets_mahidol
+        print(json_respond)
         return jsonify(json_respond)
 
 
