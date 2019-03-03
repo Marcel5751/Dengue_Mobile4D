@@ -421,9 +421,8 @@ def dengue_get_missingboxes():
         json_respond['status'] = 'success'
         json_respond['message'] = 'Missing-points found'
         json_respond['data'] = target_streets_mahidol
-        print(json_respond)
+        # print(json_respond)
         return jsonify(json_respond)
-
 
 def get_target_streets_for_mahidol_campus(lng, lat, radius):
     target_streets = missingboxradar.by_radius(
